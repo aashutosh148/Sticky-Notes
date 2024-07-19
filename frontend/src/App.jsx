@@ -4,6 +4,8 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Login from './components/Login';
 import Register from './components/Register';
 import Notes from './components/Notes';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
   const [darkMode, setDarkMode] = useState(true);
@@ -40,6 +42,7 @@ const App = () => {
           />
         </Routes>
       </Router>
+      <ToastContainer />
     </ThemeProvider>
   );
 };

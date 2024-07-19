@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { TextField, Button, Typography, Container, Box, Link } from '@mui/material';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 
 const Login = () => {
@@ -10,16 +11,20 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
     try {
       const response = await api.post('/users/login', { email, password });
       localStorage.setItem('token', response.data.token);
+      toast.success('Login successful!');
       navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
-      // Handle error (e.g., show error message)
+      toast.error(error.response?.data?.message || 'Invalid credentials');
     }
   };
-
   return (
     <Container component="main" maxWidth="xs">
       <Box

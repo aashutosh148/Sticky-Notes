@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { TextField, Button, Typography, Container, Box, Link } from '@mui/material';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 
 const Register = () => {
@@ -9,15 +10,33 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
+  const validateEmail = (email) => {
+    const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return re.test(email);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!name || !email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (!validateEmail(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
     try {
       const response = await api.post('/users/register', { name, email, password });
       localStorage.setItem('token', response.data.token);
+      toast.success('Registration successful!');
       navigate('/');
     } catch (error) {
       console.error('Registration failed:', error);
-      // Handle error (e.g., show error message)
+      toast.error(error.response?.data?.message || 'Registration failed');
     }
   };
 

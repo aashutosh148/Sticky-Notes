@@ -79,7 +79,7 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
   const colors = ['#FFF5Cd', '#B0E0E6', '#E6FFFA', '#e0e0fe', '#FFC0CB', '#FFE6FA'];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1 }} onClick={() => { if (isAdding) setIsAdding(false); }} className='min-h-screen mb-4'>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -104,7 +104,7 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
           Add Note
         </Button>
         {isAdding && (
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2 }} onClick={(e) => e.stopPropagation()}>
             <TextField
               fullWidth
               multiline
@@ -112,8 +112,16 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Type your note..."
+              onClick={(e) => e.stopPropagation()}
             />
-            <Button variant="contained" onClick={handleAddNote} sx={{ mt: 1 }}>
+            <Button
+              variant="contained"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddNote();
+              }}
+              sx={{ mt: 1 }}
+            >
               Add
             </Button>
           </Box>
@@ -133,8 +141,8 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                   justifyContent: 'space-between',
                   color: 'black',
                   boxShadow: darkMode
-                    ? '0 4px 8px rgba(255, 255, 255, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2)' // Dark mode shadows
-                    : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',    // Light mode shadows
+                    ? '0 4px 8px rgba(255, 255, 255, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2)'
+                    : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -143,20 +151,18 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                     right: 0,
                     bottom: 0,
                     boxShadow: darkMode
-                      ? 'inset 0 2px 4px rgba(255, 255, 255, 0.1)' // Inner shadow for dark mode
-                      : 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',    // Inner shadow for light mode
+                      ? 'inset 0 2px 4px rgba(255, 255, 255, 0.1)'
+                      : 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
                     pointerEvents: 'none'
                   }
                 }}
               >
-
                 <CardContent>
                   <Typography>
                     {renderNoteContent(note)}
                   </Typography>
                 </CardContent>
                 <div>
-
                   <Typography variant="body2" sx={{ color: 'darkslategray' }}>
                     {new Date(note.createdAt).toLocaleDateString('en-US', {
                       day: 'numeric',
@@ -164,7 +170,6 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                       year: 'numeric'
                     })}
                   </Typography>
-
                   <IconButton
                     className="deleteIcon"
                     sx={{
@@ -173,13 +178,12 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                       bottom: 5,
                       opacity: 0,
                       transition: 'opacity 0.3s',
-                      color: 'black' // ensure the icon color is visible on dark background
+                      color: 'black' 
                     }}
                     onClick={() => handleDeleteNote(note._id)}
                   >
                     <DeleteIcon />
                   </IconButton>
-
                 </div>
               </Card>
             </Grid>
