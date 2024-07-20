@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Box, Typography, TextField, Button, Card, CardContent,
-  IconButton, Grid, AppBar, Toolbar, Switch, FormControlLabel
+  IconButton, AppBar, Toolbar, Switch, FormControlLabel
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Logout as LogoutIcon } from '@mui/icons-material';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
 
 const Notes = ({ toggleDarkMode, darkMode }) => {
@@ -12,6 +13,7 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
   const [newNote, setNewNote] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,6 +78,26 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
     return note.content;
   };
 
+  const onDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const onDragEnd = (result) => {
+    setIsDragging(false);
+    if (!result.destination) {
+      if (result.draggableId && result.source) {
+        handleDeleteNote(result.draggableId);
+      }
+      return;
+    }
+
+    const newNotes = Array.from(notes);
+    const [reorderedNote] = newNotes.splice(result.source.index, 1);
+    newNotes.splice(result.destination.index, 0, reorderedNote);
+
+    setNotes(newNotes);
+  };
+
   const colors = ['#FFF5Cd', '#B0E0E6', '#E6FFFA', '#e0e0fe', '#FFC0CB', '#FFE6FA'];
 
   return (
@@ -126,69 +148,137 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
             </Button>
           </Box>
         )}
-        <Grid container spacing={2}>
-          {notes.map((note, index) => (
-            <Grid item xs={12} sm={6} md={4} key={note._id}>
-              <Card
+        <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+          <Droppable droppableId="notes" direction="horizontal">
+            {(provided) => (
+              <Box
+                {...provided.droppableProps}
+                ref={provided.innerRef}
                 sx={{
-                  position: 'relative',
-                  height: expandedNoteId === note._id ? 'auto' : '200px',
-                  backgroundColor: colors[index % colors.length],
-                  '&:hover .deleteIcon': { opacity: 1 },
-                  padding: 2,
                   display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  color: 'black',
-                  boxShadow: darkMode
-                    ? '0 4px 8px rgba(255, 255, 255, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2)'
-                    : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    boxShadow: darkMode
-                      ? 'inset 0 2px 4px rgba(255, 255, 255, 0.1)'
-                      : 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
-                    pointerEvents: 'none'
-                  }
+                  flexWrap: 'wrap',
+                  gap: 2,
+                  minHeight: '200px'
                 }}
               >
-                <CardContent>
-                  <Typography>
-                    {renderNoteContent(note)}
-                  </Typography>
-                </CardContent>
-                <div>
-                  <Typography variant="body2" sx={{ color: 'darkslategray' }}>
-                    {new Date(note.createdAt).toLocaleDateString('en-US', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </Typography>
-                  <IconButton
-                    className="deleteIcon"
-                    sx={{
-                      position: 'absolute',
-                      right: 5,
-                      bottom: 5,
-                      opacity: 0,
-                      transition: 'opacity 0.3s',
-                      color: 'black' 
-                    }}
-                    onClick={() => handleDeleteNote(note._id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </div>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                {notes.map((note, index) => (
+                  <Draggable key={note._id} draggableId={note._id} index={index}>
+                    {(provided, snapshot) => (
+                      <Box
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        sx={{ width: 'calc(33.33% - 16px)', minWidth: '200px', mb: 2 }}
+                      >
+                        <Card
+                          sx={{
+                            height: '200px', // Fixed height
+                            backgroundColor: colors[index % colors.length],
+                            '&:hover .deleteIcon': { opacity: 1 },
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            color: 'black',
+                            boxShadow: darkMode
+                              ? '0 4px 8px rgba(255, 255, 255, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2)'
+                              : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+                            transform: snapshot.isDragging ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'transform 0.2s',
+                            position: 'relative', // For absolute positioning of expanded content
+                            overflow: 'hidden' // Hide overflowing content
+                          }}
+                        >
+                          <CardContent sx={{ height: '100%', overflow: 'hidden' }}>
+                            <Typography>
+                              {note.content.length > 100 && expandedNoteId !== note._id ? (
+                                <>
+                                  {note.content.substring(0, 100)}...
+                                  <Button onClick={() => toggleExpandNote(note._id)}>more</Button>
+                                </>
+                              ) : (
+                                note.content
+                              )}
+                            </Typography>
+                            {expandedNoteId === note._id && (
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  backgroundColor: colors[index % colors.length],
+                                  padding: 2,
+                                  overflowY: 'auto'
+                                }}
+                              >
+                                <Typography>{note.content}</Typography>
+                                <Button onClick={() => toggleExpandNote(note._id)}>show less</Button>
+                              </Box>
+                            )}
+                          </CardContent>
+                          <Box sx={{
+                            p: 1,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+                          }}>
+                            <Typography variant="body2" sx={{ color: 'darkslategray', fontSize: '0.8rem' }}>
+                              {new Date(note.createdAt).toLocaleDateString('en-US', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </Typography>
+                            <IconButton
+                              className="deleteIcon"
+                              sx={{
+                                opacity: 0,
+                                transition: 'opacity 0.3s',
+                                color: 'black',
+                                padding: 0.5
+                              }}
+                              onClick={() => handleDeleteNote(note._id)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Card>
+                      </Box>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+          <Droppable droppableId="dustbin">
+            {(provided, snapshot) => (
+              <Box
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                sx={{
+                  position: 'fixed',
+                  bottom: 20,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 100,
+                  height: 100,
+                  backgroundColor: snapshot.isDraggingOver ? 'red' : 'rgba(255, 0, 0, 0.5)',
+                  display: isDragging ? 'flex' : 'none',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: '50%',
+                  transition: 'background-color 0.3s'
+                }}
+              >
+                <DeleteIcon sx={{ fontSize: 40, color: 'white' }} />
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+        </DragDropContext>
       </Container>
     </Box>
   );
