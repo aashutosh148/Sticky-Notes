@@ -7,9 +7,9 @@ exports.register = async (req, res) => {
     const user = new User(req.body);
     await user.save();
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    res.status(201).send({ user, token });
+    return res.status(201).send({ user, token });
   } catch (error) {
-    res.status(400).send(error);
+    return res.status(400).send(error);
   }
 };
 
@@ -20,8 +20,8 @@ exports.login = async (req, res) => {
       throw new Error('Invalid login credentials');
     }
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    res.send({ user, token });
+    return res.send({ user, token });
   } catch (error) {
-    res.status(400).send(error);
+    return res.status(400).send(error);
   }
 };

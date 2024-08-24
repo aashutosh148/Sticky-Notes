@@ -7,18 +7,18 @@ exports.createNote = async (req, res) => {
       user: req.user._id
     });
     await note.save();
-    res.status(201).send(note);
+    return res.status(201).send(note);
   } catch (error) {
-    res.status(400).send(error);
+    return res.status(400).send(error);
   }
 };
 
 exports.getNotes = async (req, res) => {
   try {
     const notes = await Note.find({ user: req.user._id });
-    res.send(notes);
+    return res.send(notes);
   } catch (error) {
-    res.status(500).send();
+    return res.status(500).send();
   }
 };
 
@@ -28,8 +28,8 @@ exports.deleteNote = async (req, res) => {
     if (!note) {
       return res.status(404).send();
     }
-    res.send(note);
+    return res.send(note);
   } catch (error) {
-    res.status(500).send();
+    return res.status(500).send();
   }
 };

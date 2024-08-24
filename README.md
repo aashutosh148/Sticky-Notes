@@ -8,6 +8,7 @@ This is a full-stack MERN (MongoDB, Express, React, Node.js) application that al
 - Create, read, and delete sticky notes
 - Dark mode by default with light mode toggle
 - Responsive design for various screen sizes
+- Drag and drop-delete, rearrange functionality.
 
 ## Project Structure
 
