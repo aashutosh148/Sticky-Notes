@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { TextField, Button, Typography, Container, Box, Link } from '@mui/material';
+import { TextField, Button, Typography, Container, Box, Link, CircularProgress } from '@mui/material';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -15,6 +16,7 @@ const Login = () => {
       toast.error('Please fill in all fields');
       return;
     }
+    setIsLoading(true);
     try {
       const response = await api.post('/users/login', { email, password });
       localStorage.setItem('token', response.data.token);
@@ -22,9 +24,18 @@ const Login = () => {
       navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error(error.response?.data?.message || 'Invalid credentials');
+      if (error.response) {
+        toast.error(error.response.data.message || 'Invalid credentials');
+      } else if (error.request) {
+        toast.error('No response from server. Please try again.');
+      } else {
+        toast.error('An error occurred. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
+
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -50,6 +61,7 @@ const Login = () => {
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
           />
           <TextField
             margin="normal"
@@ -62,14 +74,16 @@ const Login = () => {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
           </Button>
           <Link component={RouterLink} to="/register" variant="body2">
             {"Don't have an account? Sign Up"}

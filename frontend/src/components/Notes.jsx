@@ -30,22 +30,35 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
   };
 
   const handleAddNote = async () => {
+    const tempId = Date.now().toString();
+    const newNoteObject = { _id: tempId, content: newNote, createdAt: new Date().toISOString() };
+
+    setNotes(prevNotes => [...prevNotes, newNoteObject]);
+    setNewNote('');
+    setIsAdding(false);
+
     try {
       const response = await api.post('/notes', { content: newNote });
-      setNotes([...notes, response.data]);
-      setNewNote('');
-      setIsAdding(false);
+      setNotes(prevNotes => prevNotes.map(note =>
+        note._id === tempId ? response.data : note
+      ));
     } catch (error) {
       console.error('Error adding note:', error);
+      setNotes(prevNotes => prevNotes.filter(note => note._id !== tempId));
     }
   };
 
   const handleDeleteNote = async (id) => {
+    setNotes(prevNotes => prevNotes.filter(note => note._id !== id));
+
     try {
       await api.delete(`/notes/${id}`);
-      setNotes(notes.filter(note => note._id !== id));
     } catch (error) {
       console.error('Error deleting note:', error);
+      const noteToRestore = notes.find(note => note._id === id);
+      if (noteToRestore) {
+        setNotes(prevNotes => [...prevNotes, noteToRestore]);
+      }
     }
   };
 
@@ -56,26 +69,6 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
 
   const toggleExpandNote = (id) => {
     setExpandedNoteId(expandedNoteId === id ? null : id);
-  };
-
-  const renderNoteContent = (note) => {
-    const maxLength = 100;
-    if (note.content.length > maxLength && expandedNoteId !== note._id) {
-      return (
-        <>
-          {note.content.substring(0, maxLength)}...
-          <Button onClick={() => toggleExpandNote(note._id)}>more</Button>
-        </>
-      );
-    } else if (expandedNoteId === note._id) {
-      return (
-        <>
-          {note.content}
-          <Button onClick={() => toggleExpandNote(note._id)}>show less</Button>
-        </>
-      );
-    }
-    return note.content;
   };
 
   const onDragStart = () => {
@@ -96,6 +89,9 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
     newNotes.splice(result.destination.index, 0, reorderedNote);
 
     setNotes(newNotes);
+
+    // Optionally, update the backend with the new order
+    // api.post('/notes/reorder', { newOrder: newNotes.map(note => note._id) });
   };
 
   const colors = ['#FFF5Cd', '#B0E0E6', '#E6FFFA', '#e0e0fe', '#FFC0CB', '#FFE6FA'];
@@ -172,7 +168,7 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                       >
                         <Card
                           sx={{
-                            height: '200px', // Fixed height
+                            height: '200px',
                             backgroundColor: colors[index % colors.length],
                             '&:hover .deleteIcon': { opacity: 1 },
                             display: 'flex',
@@ -184,8 +180,8 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                               : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',
                             transform: snapshot.isDragging ? 'scale(1.05)' : 'scale(1)',
                             transition: 'transform 0.2s',
-                            position: 'relative', // For absolute positioning of expanded content
-                            overflow: 'hidden' // Hide overflowing content
+                            position: 'relative',
+                            overflow: 'hidden'
                           }}
                         >
                           <CardContent sx={{ height: '100%', overflow: 'hidden' }}>
