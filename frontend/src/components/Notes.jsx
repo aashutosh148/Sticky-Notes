@@ -9,7 +9,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
 import SkeletonLoader from './SkeletonLoader';
 
-const Notes = ({ toggleDarkMode, darkMode }) => {
+const Notes = ({ toggleDarkMode, darkMode, username}) => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -96,8 +96,6 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
 
     setNotes(newNotes);
 
-    // Optionally, update the backend with the new order
-    // api.post('/notes/reorder', { newOrder: newNotes.map(note => note._id) });
   };
 
   const colors = ['#FFF5Cd', '#B0E0E6', '#E6FFFA', '#e0e0fe', '#FFC0CB', '#FFE6FA'];
@@ -119,6 +117,10 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
         </Toolbar>
       </AppBar>
       <Container maxWidth="md" sx={{ mt: 4 }}>
+        <div>
+          { <h1 className="text-3xl  "> Welcome {username}!! <span className="wave inline-block">👋</span></h1>}
+        </div>
+
         <Button
           variant="contained"
           startIcon={<AddIcon />}

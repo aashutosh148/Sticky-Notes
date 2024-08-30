@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -9,7 +9,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
   const [darkMode, setDarkMode] = useState(true);
-
   const theme = createTheme({
     palette: {
       mode: darkMode ? 'dark' : 'light',
@@ -22,7 +21,10 @@ const App = () => {
 
   const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
-    return token ? children : <Navigate to="/login" />;
+    const location = useLocation();
+    const username = location.state?.username;
+    console.log(username + "app.jsx");
+    return token ? React.cloneElement(children, { username }) : <Navigate to="/login" />;
   };
 
   return (
