@@ -7,6 +7,7 @@ import {
 import { Add as AddIcon, Delete as DeleteIcon, Logout as LogoutIcon } from '@mui/icons-material';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
+import SkeletonLoader from './SkeletonLoader';
 
 const Notes = ({ toggleDarkMode, darkMode }) => {
   const [notes, setNotes] = useState([]);
@@ -14,6 +15,7 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,11 +23,15 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
   }, []);
 
   const fetchNotes = async () => {
+    setIsLoading(true);
     try {
       const response = await api.get('/notes');
       setNotes(response.data);
     } catch (error) {
       console.error('Error fetching notes:', error);
+    }
+    finally {
+      setIsLoading(false);
     }
   };
 
@@ -157,94 +163,97 @@ const Notes = ({ toggleDarkMode, darkMode }) => {
                   minHeight: '200px'
                 }}
               >
-                {notes.map((note, index) => (
-                  <Draggable key={note._id} draggableId={note._id} index={index}>
-                    {(provided, snapshot) => (
-                      <Box
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        sx={{ width: 'calc(33.33% - 16px)', minWidth: '200px', mb: 2 }}
-                      >
-                        <Card
-                          sx={{
-                            height: '200px',
-                            backgroundColor: colors[index % colors.length],
-                            '&:hover .deleteIcon': { opacity: 1 },
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            color: 'black',
-                            boxShadow: darkMode
-                              ? '0 4px 8px rgba(255, 255, 255, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2)'
-                              : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',
-                            transform: snapshot.isDragging ? 'scale(1.05)' : 'scale(1)',
-                            transition: 'transform 0.2s',
-                            position: 'relative',
-                            overflow: 'hidden'
-                          }}
+                {isLoading ? (
+                  <SkeletonLoader count={6} /> // Show SkeletonLoader while loading
+                ) : (
+                  notes.map((note, index) => (
+                    <Draggable key={note._id} draggableId={note._id} index={index}>
+                      {(provided, snapshot) => (
+                        <Box
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          sx={{ width: 'calc(33.33% - 16px)', minWidth: '200px', mb: 2 }}
                         >
-                          <CardContent sx={{ height: '100%', overflow: 'hidden' }}>
-                            <Typography>
-                              {note.content.length > 100 && expandedNoteId !== note._id ? (
-                                <>
-                                  {note.content.substring(0, 100)}...
-                                  <Button onClick={() => toggleExpandNote(note._id)}>more</Button>
-                                </>
-                              ) : (
-                                note.content
+                          <Card
+                            sx={{
+                              height: '200px',
+                              backgroundColor: colors[index % colors.length],
+                              '&:hover .deleteIcon': { opacity: 1 },
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              color: 'black',
+                              boxShadow: darkMode
+                                ? '0 4px 8px rgba(255, 255, 255, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2)'
+                                : '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+                              transform: snapshot.isDragging ? 'scale(1.05)' : 'scale(1)',
+                              transition: 'transform 0.2s',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <CardContent sx={{ height: '100%', overflow: 'hidden' }}>
+                              <Typography>
+                                {note.content.length > 100 && expandedNoteId !== note._id ? (
+                                  <>
+                                    {note.content.substring(0, 100)}...
+                                    <Button onClick={() => toggleExpandNote(note._id)}>more</Button>
+                                  </>
+                                ) : (
+                                  note.content
+                                )}
+                              </Typography>
+                              {expandedNoteId === note._id && (
+                                <Box
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundColor: colors[index % colors.length],
+                                    padding: 2,
+                                    overflowY: 'auto'
+                                  }}
+                                >
+                                  <Typography>{note.content}</Typography>
+                                  <Button onClick={() => toggleExpandNote(note._id)}>show less</Button>
+                                </Box>
                               )}
-                            </Typography>
-                            {expandedNoteId === note._id && (
-                              <Box
+                            </CardContent>
+                            <Box sx={{
+                              p: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+                            }}>
+                              <Typography variant="body2" sx={{ color: 'darkslategray', fontSize: '0.8rem' }}>
+                                {new Date(note.createdAt).toLocaleDateString('en-US', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </Typography>
+                              <IconButton
+                                className="deleteIcon"
                                 sx={{
-                                  position: 'absolute',
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  bottom: 0,
-                                  backgroundColor: colors[index % colors.length],
-                                  padding: 2,
-                                  overflowY: 'auto'
+                                  opacity: 0,
+                                  transition: 'opacity 0.3s',
+                                  color: 'black',
+                                  padding: 0.5
                                 }}
+                                onClick={() => handleDeleteNote(note._id)}
                               >
-                                <Typography>{note.content}</Typography>
-                                <Button onClick={() => toggleExpandNote(note._id)}>show less</Button>
-                              </Box>
-                            )}
-                          </CardContent>
-                          <Box sx={{
-                            p: 1,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            borderTop: '1px solid rgba(0, 0, 0, 0.1)'
-                          }}>
-                            <Typography variant="body2" sx={{ color: 'darkslategray', fontSize: '0.8rem' }}>
-                              {new Date(note.createdAt).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                              })}
-                            </Typography>
-                            <IconButton
-                              className="deleteIcon"
-                              sx={{
-                                opacity: 0,
-                                transition: 'opacity 0.3s',
-                                color: 'black',
-                                padding: 0.5
-                              }}
-                              onClick={() => handleDeleteNote(note._id)}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </Card>
-                      </Box>
-                    )}
-                  </Draggable>
-                ))}
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </Card>
+                        </Box>
+                      )}
+                    </Draggable>
+                  )))}
                 {provided.placeholder}
               </Box>
             )}
