@@ -9,7 +9,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
 import SkeletonLoader from './SkeletonLoader';
 
-const Notes = ({ toggleDarkMode, darkMode, username}) => {
+const Notes = ({ toggleDarkMode, darkMode, username = localStorage.getItem('username')}) => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [isAdding, setIsAdding] = useState(false);

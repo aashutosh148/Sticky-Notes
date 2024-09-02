@@ -20,6 +20,7 @@ const Login = () => {
     try {
       const response = await api.post('/users/login', { email, password });
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('username', response.data.user.name);
       const username = response.data.user.name;
       toast.success('Login successful!');
       navigate('/', { state: { username } });
