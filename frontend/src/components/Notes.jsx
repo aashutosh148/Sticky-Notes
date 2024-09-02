@@ -70,6 +70,7 @@ const Notes = ({ toggleDarkMode, darkMode, username = localStorage.getItem('user
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
     navigate('/login');
   };
 
